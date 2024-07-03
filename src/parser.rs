@@ -5,6 +5,9 @@ use crate::lexer::{Tokens, Token};
 use std::iter::Peekable;
 use std::slice::Iter;
 
+#[cfg(test)]
+mod tests;
+
 pub enum Operator {
     Plus,
     Minus, 
@@ -12,6 +15,7 @@ pub enum Operator {
     Divide,
 }
 
+#[derive(Debug)]
 pub enum Node {
     // Values
         // What purpose do values serve in the node area
@@ -165,36 +169,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 match iter.peek().unwrap().token {
                     Token::Equal => {
                         // Variable support goes here
-                        iter.next(); // This is the equal sign
-                        let variable_value = iter.next().unwrap();
-                        let op_or_end = iter.peek().unwrap(); // Used to check if it is an operation or a semicolon
-                        match &variable_value.token {
-                            Token::String(value_str) => {
-                                match op_or_end.token {
-                                    Token::Semicolon => {
-                                        nodes.push(Node::SetVariable { name: str.to_string(), value: Box::new(Node::String(value_str.to_string())) });
-                                    },
-                                    Token::Plus => {
-                                        // while Some(next_value)
-                                    },
-
-                                    _ => {
-                                        return Err(SyntaxError::new(format!(
-                                            "Excepted semicolon or operator after String, got unexpected result instead"), 
-                                            // Using variable_value.line as that is where the error when writing the code would be located
-                                            variable_value.line
-                                        )); 
-                                    }
-                                }
-                            },
-                            Token::Number(_num) => {
-
-                            }
-
-                            _ => {
-                                return Err(SyntaxError::new(format!("That cannot be stored as a variable"), token.line));
-                            }
-                        }
+                        set_variable(str.to_string(), token.line, iter).unwrap();
                     },
                     Token::Semicolon => {
                         nodes.push(Node::String(str.to_string()));
@@ -322,4 +297,41 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
         }
     }
     todo!();
+}
+
+fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Tokens>>) -> Result<Vec<Node>, SyntaxError> {
+    let mut nodes: Vec<Node> = Vec::new();
+
+    // Variable support goes here
+    iter.next(); // This is the equal sign
+    let variable_value = iter.next().unwrap();
+    let op_or_end = iter.peek().unwrap(); // Used to check if it is an operation or a semicolon
+    match &variable_value.token {
+        Token::String(value_str) => {
+            match op_or_end.token {
+                Token::Semicolon => {
+                    nodes.push(Node::SetVariable { name: variable_name.to_string(), value: Box::new(Node::String(value_str.to_string())) });
+                    return Ok(nodes);
+                },
+                Token::Plus => {
+                    todo!();
+                },
+
+                _ => {
+                    return Err(SyntaxError::new(format!(
+                        "Excepted semicolon or operator after String, got unexpected result instead"), 
+                        // Using variable_value.line as that is where the error when writing the code would be located
+                        variable_value.line
+                    )); 
+                }
+            }
+        },
+        Token::Number(_num) => {
+            todo!();
+        }
+
+        _ => {
+            return Err(SyntaxError::new(format!("That cannot be stored as a variable"), line));
+        }
+    } 
 }

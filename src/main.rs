@@ -24,7 +24,7 @@ fn main() {
     let _invalid_test = "1+a";
 
     // Select which test input you want to use here
-    let input = _invalid_test.to_string(); 
+    let input = _repeat_test_input.to_string(); 
 
     let tokens = lexer::tokenizer(input.clone());
 

@@ -1,5 +1,8 @@
 # TODO
 
+- [ ] Seperate out parser.rs, currently it is very convoluted
+- [ ] Unit tests
+
 - [ ] Error Handling
   - [x] Incredibly Basic Error Handling
   - [ ] Add line and character for error messages
