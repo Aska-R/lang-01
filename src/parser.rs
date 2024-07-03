@@ -206,13 +206,14 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 let value = iter.next().unwrap();
                 let right_paren = iter.next().unwrap();
 
+                // Error checks
                 if matches!(left_paren.token, Token::LeftParen) {
                     return Err(SyntaxError::new(format!("Left paren expected after repeat keyword"), left_paren.line));
                 }
                 else if matches!(right_paren.token, Token::RightParen) {
                     return Err(SyntaxError::new(format!("Right paren expected after repeat and left paren"), right_paren.line));
                 }
-            
+                
                 match value.token {
                     Token::Number(num) => {
                         next_scope = NextScope::RepeatState { repeat_count: (num) };
@@ -246,26 +247,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 
             },
             Token::LeftBracket => {
-                // Possible optimisation here, instead of putting the nodes into new_nodes have it directly edit the nodes
-                let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
-                
-                // Depending on which the next scope will be what affect what the next scope 
-                match next_scope {
-                    NextScope::Default => {
-                        return Err(SyntaxError::new(format!("Unset scopes are not supported"), token.line));
-                    },
-                    NextScope::IfState { check: _ } => todo!(),
-                    NextScope::ElseIfState { check: _ } => todo!(),
-                    NextScope::ElseState => todo!(),
-                    NextScope::WhileState { check: _ } => todo!(),
-                    NextScope::RepeatState { repeat_count } => {
-                        nodes.push(Node::Repeat { count: repeat_count, nodes: new_nodes });
-                    },
-                    NextScope::VariableSetState => todo!(),
-                    NextScope::FunctionCreateState => {
-                        
-                    },
-                }
+                nodes.push(create_next_scope(iter, &next_scope, token.line).unwrap());
             },
             Token::RightBracket => {
                 // This occurs when the function is called inside a left bracket
@@ -336,3 +318,95 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
         }
     } 
 }
+
+fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, line: u64) -> Result<Node, SyntaxError> {
+    // Possible optimisation here, instead of putting the nodes into new_nodes have it directly edit the nodes
+    let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
+
+    // Depending on which the next scope will be what affect what the next scope 
+    match next_scope {
+        NextScope::Default => {
+            return Err(SyntaxError::new(format!("Unset scopes are not supported"), line));
+        },
+        NextScope::IfState { check: _ } => todo!(),
+        NextScope::ElseIfState { check: _ } => todo!(),
+        NextScope::ElseState => todo!(),
+        NextScope::WhileState { check: _ } => todo!(),
+        NextScope::RepeatState { repeat_count } => {
+            return Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes });
+        },
+        NextScope::VariableSetState => todo!(),
+        NextScope::FunctionCreateState => {
+            todo!();
+        },
+    }
+}
+
+// fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, ) -> Result<Vec<Node>, SyntaxError> {
+//     let nodes = 
+
+//     match iter.peek().unwrap().token {
+//         Token::Plus => {
+//             iter.next(); // this is equal to the plus
+//             let next_value = &iter.next().unwrap().token;
+
+//             match next_value {
+//                 Token::Number(next_num) => {
+//                     nodes.push(Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+//                 },
+
+//                 _ => {
+//                     return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '+'"), token.line));
+//                 }
+//             }
+//         },
+//         Token::Dash => {
+//             iter.next(); // this is equal to the minus
+//             let next_value = &iter.next().unwrap().token;
+
+//             match next_value {
+//                 Token::Number(next_num) => {
+//                     nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+//                 }
+                
+//                 _ => {
+//                     return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '-'"), token.line));
+//                 }
+//             }
+//         },
+//         Token::Star => {
+//             iter.next();
+//             let next_value = &iter.next().unwrap().token;
+
+//             match next_value {
+//                 Token::Number(next_num) => {
+//                     nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+//                 },
+
+//                 _ => {
+//                     return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '*'"), token.line));
+//                 }
+//             }
+//         },
+//         Token::Slash => {
+//             iter.next();
+//             let next_value = &iter.next().unwrap().token;
+
+//             match next_value {
+//                 Token::Number(next_num) => {
+//                     nodes.push(Node::BinaryExpr { op: (Operator::Divide), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+//                 },
+
+//                 _ => {
+//                     return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '/'"), token.line));
+//                 }
+//             }
+//         },
+
+//         _ => {
+//             nodes.push(Node::Int(*num));
+//         }
+//     }
+
+//     todo!();
+// }
