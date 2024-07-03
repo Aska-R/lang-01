@@ -8,6 +8,7 @@ use std::slice::Iter;
 #[cfg(test)]
 mod tests;
 
+#[derive(Debug, PartialEq)]
 pub enum Operator {
     Plus,
     Minus, 
@@ -15,7 +16,7 @@ pub enum Operator {
     Divide,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Node {
     // Values
         // What purpose do values serve in the node area
@@ -74,7 +75,7 @@ pub enum NextScope {
     FunctionCreateState,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SyntaxError {
     message: String,
     line: u64
