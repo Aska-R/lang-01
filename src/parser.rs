@@ -103,68 +103,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
     while let Some(token) = iter.next() {
         match &token.token {
             Token::Number(num) => {
-                match iter.peek().unwrap().token {
-                    Token::Plus => {
-                        iter.next(); // this is equal to the plus
-                        let next_value = &iter.next().unwrap().token;
-
-                        match next_value {
-                            Token::Number(next_num) => {
-                                nodes.push(Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-                            },
-
-                            _ => {
-                                return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '+'"), token.line));
-                            }
-                        }
-                    },
-                    Token::Dash => {
-                        iter.next(); // this is equal to the minus
-                        let next_value = &iter.next().unwrap().token;
-
-                        match next_value {
-                            Token::Number(next_num) => {
-                                nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-                            }
-                            
-                            _ => {
-                                return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '-'"), token.line));
-                            }
-                        }
-                    },
-                    Token::Star => {
-                        iter.next();
-                        let next_value = &iter.next().unwrap().token;
-
-                        match next_value {
-                            Token::Number(next_num) => {
-                                nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-                            },
-
-                            _ => {
-                                return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '*'"), token.line));
-                            }
-                        }
-                    },
-                    Token::Slash => {
-                        iter.next();
-                        let next_value = &iter.next().unwrap().token;
-
-                        match next_value {
-                            Token::Number(next_num) => {
-                                nodes.push(Node::BinaryExpr { op: (Operator::Divide), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-                            },
-
-                            _ => {
-                                return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '/'"), token.line));
-                            }
-                        }
-                    },
-
-                    _ => {
-                        nodes.push(Node::Int(*num));
-                    }
-                }
+                nodes.append(&mut examine_numbers(iter, num, token.line).unwrap())
             },
             Token::String(str) => {
                 match iter.peek().unwrap().token {
@@ -342,71 +281,71 @@ fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, 
     }
 }
 
-// fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, ) -> Result<Vec<Node>, SyntaxError> {
-//     let nodes = 
+fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> Result<Vec<Node>, SyntaxError> {
+    let mut nodes: Vec<Node> =  Vec::new();
 
-//     match iter.peek().unwrap().token {
-//         Token::Plus => {
-//             iter.next(); // this is equal to the plus
-//             let next_value = &iter.next().unwrap().token;
+    match iter.peek().unwrap().token {
+        Token::Plus => {
+            iter.next(); // this is equal to the plus
+            let next_value = &iter.next().unwrap().token;
 
-//             match next_value {
-//                 Token::Number(next_num) => {
-//                     nodes.push(Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-//                 },
+            match next_value {
+                Token::Number(next_num) => {
+                    nodes.push(Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                },
 
-//                 _ => {
-//                     return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '+'"), token.line));
-//                 }
-//             }
-//         },
-//         Token::Dash => {
-//             iter.next(); // this is equal to the minus
-//             let next_value = &iter.next().unwrap().token;
+                _ => {
+                    return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '+'"), line));
+                }
+            }
+        },
+        Token::Dash => {
+            iter.next(); // this is equal to the minus
+            let next_value = &iter.next().unwrap().token;
 
-//             match next_value {
-//                 Token::Number(next_num) => {
-//                     nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-//                 }
+            match next_value {
+                Token::Number(next_num) => {
+                    nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                }
                 
-//                 _ => {
-//                     return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '-'"), token.line));
-//                 }
-//             }
-//         },
-//         Token::Star => {
-//             iter.next();
-//             let next_value = &iter.next().unwrap().token;
+                _ => {
+                    return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '-'"), line));
+                }
+            }
+        },
+        Token::Star => {
+            iter.next();
+            let next_value = &iter.next().unwrap().token;
 
-//             match next_value {
-//                 Token::Number(next_num) => {
-//                     nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-//                 },
+            match next_value {
+                Token::Number(next_num) => {
+                    nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                },
 
-//                 _ => {
-//                     return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '*'"), token.line));
-//                 }
-//             }
-//         },
-//         Token::Slash => {
-//             iter.next();
-//             let next_value = &iter.next().unwrap().token;
+                _ => {
+                    return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '*'"), line));
+                }
+            }
+        },
+        Token::Slash => {
+            iter.next();
+            let next_value = &iter.next().unwrap().token;
 
-//             match next_value {
-//                 Token::Number(next_num) => {
-//                     nodes.push(Node::BinaryExpr { op: (Operator::Divide), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
-//                 },
+            match next_value {
+                Token::Number(next_num) => {
+                    nodes.push(Node::BinaryExpr { op: (Operator::Divide), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                },
 
-//                 _ => {
-//                     return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '/'"), token.line));
-//                 }
-//             }
-//         },
+                _ => {
+                    return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '/'"), line));
+                }
+            }
+        },
 
-//         _ => {
-//             nodes.push(Node::Int(*num));
-//         }
-//     }
+        _ => {
+            nodes.push(Node::Int(*num));
+        }
+    }
 
-//     todo!();
-// }
+    todo!();
+}

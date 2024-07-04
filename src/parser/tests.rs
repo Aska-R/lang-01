@@ -43,3 +43,17 @@ fn test_set_variable() {
         )
     );
 }
+
+#[test]
+fn test_examine_numbers() {
+    let binding = create_fake_tokens(
+        "1+9".to_string()
+    );
+    let mut iter = binding.iter().peekable();
+    assert_eq!(
+        examine_numbers(&mut iter, &1, 42),
+        create_fake_node(
+            Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(1)), rhs: (Box::new(9)) }
+        )
+    );
+}
