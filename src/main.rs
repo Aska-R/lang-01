@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use lexer::dump_tokens;
+
 mod lexer;
 mod parser;
 mod interpreter;
@@ -25,8 +27,10 @@ fn main() {
 
     // Select which test input you want to use here
     let input = _repeat_test_input.to_string(); 
+    println!("{}", input);
 
     let tokens = lexer::tokenizer(input.clone());
+    dump_tokens(tokens.clone());
 
     let _instructions = parser::parse(tokens).unwrap();
 

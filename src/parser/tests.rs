@@ -45,15 +45,26 @@ fn test_set_variable() {
 }
 
 #[test]
-fn test_examine_numbers() {
+fn test_examine_numbers_binaryexpr_plus() {
     let binding = create_fake_tokens(
-        "1+9".to_string()
+        "+9".to_string()
     );
     let mut iter = binding.iter().peekable();
     assert_eq!(
         examine_numbers(&mut iter, &1, 42),
         create_fake_node(
-            Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(1)), rhs: (Box::new(9)) }
+            Node::BinaryExpr { 
+                op: (Operator::Plus), 
+                lhs: Box::new(Node::Int(1)), 
+                rhs: Box::new(Node::Int(9)) 
+            }
         )
     );
+}
+
+#[test]
+fn test_examine_string() {
+    let binding = create_fake_tokens(
+        ""
+    )
 }

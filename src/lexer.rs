@@ -1,5 +1,6 @@
 use std::iter::{self, from_fn};
 
+#[derive(Clone)]
 pub enum Token {
     Number(i64),
     String(String),
@@ -25,6 +26,7 @@ pub enum Token {
     Eof,
 }
 
+#[derive(Clone)]
 pub struct Tokens {
     pub token: Token,
     pub line: u64 // currently just implementing line number for errors, may include character number later
@@ -140,9 +142,9 @@ fn is_reserved(ch: char) -> bool {
     matches!(ch, '(' | ')' | '+' | '-' | '*' | '/' | '"' | ' ' | '\n' | '.' | '；' | '。' | '、' | '”' | '’' | '{' | '}')
 }
 
-pub fn dump_tokens(tokens: Vec<Token>) {
+pub fn dump_tokens(tokens: Vec<Tokens>) {
     for token in tokens {
-        match token {
+        match token.token {
             Token::Number(token_value) => println!("Number: {}", token_value),
             Token::String(token_value) => println!("String: {}", token_value),
             Token::Other(token_value) => println!("Other: {}", token_value),
@@ -161,7 +163,7 @@ pub fn dump_tokens(tokens: Vec<Token>) {
             Token::RightBracket => println!("}}"),
             Token::While => todo!(),
             Token::For => todo!(),
-            Token::Repeat => todo!(),
+            Token::Repeat => println!("Repeat"),
             Token::If => todo!(),
             Token::Elseif => todo!(),
             Token::Else => todo!(),

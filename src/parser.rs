@@ -8,6 +8,7 @@ use std::slice::Iter;
 #[cfg(test)]
 mod tests;
 
+/// Operators are used for operations (+, -, *, /)
 #[derive(Debug, PartialEq)]
 pub enum Operator {
     Plus,
@@ -16,10 +17,10 @@ pub enum Operator {
     Divide,
 }
 
+/// Node is the struct used for the instructions which will be eventually be interpreted.
 #[derive(Debug, PartialEq)]
 pub enum Node {
     // Values
-        // What purpose do values serve in the node area
     Int(i64),
     String(String), 
     Bool(bool),
@@ -45,7 +46,7 @@ pub enum Node {
     // Other
     Repeat {
         count: i64,
-        nodes: Vec<Node> // I'm not sure if I should be using a Vec here
+        nodes: Vec<Node>
     },
     Function {
         name: String,
@@ -54,7 +55,7 @@ pub enum Node {
     Eof
 }
 
-// Next scope is used when the parser reaches a scope indicator, used the next time the program goes into a scope
+/// Next scope is used when the parser reaches a scope indicator, used the next time the program goes into a scope
 // Does this mean the error messages will be terrible? Yes. Do I have time to fix it now? No. :(
 pub enum NextScope {
     Default, 
@@ -93,7 +94,7 @@ impl SyntaxError {
 pub fn parse(tokens: Vec<Tokens>) -> Result<Vec<Node>, SyntaxError> {
     let mut iter: Peekable<Iter<Tokens>> = tokens.iter().peekable();
 
-    return put_into_nodes(&mut iter, Token::Eof);
+    put_into_nodes(&mut iter, Token::Eof)
 }
 
 fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result<Vec<Node>, SyntaxError> {
@@ -103,66 +104,16 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
     while let Some(token) = iter.next() {
         match &token.token {
             Token::Number(num) => {
-                nodes.append(&mut examine_numbers(iter, num, token.line).unwrap())
+                nodes.append(&mut examine_numbers(iter, num, token.line).unwrap());
             },
             Token::String(str) => {
-                match iter.peek().unwrap().token {
-                    Token::Equal => {
-                        // Variable support goes here
-                        set_variable(str.to_string(), token.line, iter).unwrap();
-                    },
-                    Token::Semicolon => {
-                        nodes.push(Node::String(str.to_string()));
-                    },
-                    Token::Plus => {
-                        iter.next();
-                        let next_str = &iter.next().unwrap().token;
-
-                        match next_str {
-                            Token::String(next_str) => {
-                                nodes.push(Node::CombineStr { lhs: (Box::new(Node::String(str.to_string()))), rhs: (Box::new(Node::String(next_str.to_string()))) });
-                            },
-
-                            _ => {
-                                return Err(SyntaxError::new(format!("Cannot combine number and other type using '+'"), token.line));
-                            }
-                        }
-                    }
-
-                    _ => {
-                        return Err(SyntaxError::new(format!("Expected semicolon"), token.line));
-                    }
-                }
+                nodes.append(&mut examine_string(iter, str, token.line).unwrap());
             },
             Token::Other(_) => {
                 // This is where tokens that don't fall under other token sections go
-
             },
             Token::Repeat => {
-                // have to check the next tokens to see the repeat count
-                // More advanced loops can use a proper scope when going into Paren but I won't for this
-                let left_paren = iter.next().unwrap();
-                let value = iter.next().unwrap();
-                let right_paren = iter.next().unwrap();
-
-                // Error checks
-                if matches!(left_paren.token, Token::LeftParen) {
-                    return Err(SyntaxError::new(format!("Left paren expected after repeat keyword"), left_paren.line));
-                }
-                else if matches!(right_paren.token, Token::RightParen) {
-                    return Err(SyntaxError::new(format!("Right paren expected after repeat and left paren"), right_paren.line));
-                }
-                
-                match value.token {
-                    Token::Number(num) => {
-                        next_scope = NextScope::RepeatState { repeat_count: (num) };
-                        // Next scope is managed in Token::LeftBracket
-                    },
-
-                    _ => {
-                        return Err(SyntaxError::new(format!("Expected number for repeat arg, however got something else"), token.line));
-                    }
-                }
+                next_scope = create_repeat(iter, token.line).unwrap();
             },
             Token::Bool(bool) => {
                 nodes.push(Node::Bool(*bool));
@@ -208,7 +159,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                     nodes.push(Node::Eof);
                 }
                 else {
-                    return Err(SyntaxError::new(format!("Did not close section"), token.line));
+                    return Err(SyntaxError::new("Did not close section".to_string(), token.line));
                 }
             },
             Token::While => todo!(),
@@ -233,18 +184,17 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
             match op_or_end.token {
                 Token::Semicolon => {
                     nodes.push(Node::SetVariable { name: variable_name.to_string(), value: Box::new(Node::String(value_str.to_string())) });
-                    return Ok(nodes);
+                    Ok(nodes)
                 },
                 Token::Plus => {
                     todo!();
                 },
 
                 _ => {
-                    return Err(SyntaxError::new(format!(
-                        "Excepted semicolon or operator after String, got unexpected result instead"), 
+                    Err(SyntaxError::new("Excepted semicolon or operator after String, got unexpected result instead".to_string(), 
                         // Using variable_value.line as that is where the error when writing the code would be located
                         variable_value.line
-                    )); 
+                    ))
                 }
             }
         },
@@ -253,7 +203,7 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
         }
 
         _ => {
-            return Err(SyntaxError::new(format!("That cannot be stored as a variable"), line));
+            Err(SyntaxError::new("That cannot be stored as a variable".to_string(), line))
         }
     } 
 }
@@ -265,14 +215,14 @@ fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, 
     // Depending on which the next scope will be what affect what the next scope 
     match next_scope {
         NextScope::Default => {
-            return Err(SyntaxError::new(format!("Unset scopes are not supported"), line));
+            Err(SyntaxError::new("Unset scopes are not supported".to_string(), line))
         },
         NextScope::IfState { check: _ } => todo!(),
         NextScope::ElseIfState { check: _ } => todo!(),
         NextScope::ElseState => todo!(),
         NextScope::WhileState { check: _ } => todo!(),
         NextScope::RepeatState { repeat_count } => {
-            return Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes });
+            Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes })
         },
         NextScope::VariableSetState => todo!(),
         NextScope::FunctionCreateState => {
@@ -291,11 +241,18 @@ fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> R
 
             match next_value {
                 Token::Number(next_num) => {
-                    nodes.push(Node::BinaryExpr { op: (Operator::Plus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                    nodes.push(Node::BinaryExpr { 
+                        op: (Operator::Plus), 
+                        lhs: (Box::new(Node::Int(*num))), 
+                        rhs: (Box::new(Node::Int(*next_num))) 
+                    });
                 },
 
                 _ => {
-                    return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '+'"), line));
+                    return Err(SyntaxError::new(
+                        "Cannot combine Number and other type together using '+'".to_string(),
+                        line
+                    ));
                 }
             }
         },
@@ -305,11 +262,18 @@ fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> R
 
             match next_value {
                 Token::Number(next_num) => {
-                    nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                    nodes.push(Node::BinaryExpr { 
+                        op: (Operator::Minus), 
+                        lhs: (Box::new(Node::Int(*num))), 
+                        rhs: (Box::new(Node::Int(*next_num))) 
+                    });
                 }
                 
                 _ => {
-                    return Err(SyntaxError::new(format!("Cannot combine Number and other type together using '-'"), line));
+                    return Err(SyntaxError::new(
+                        "Cannot combine Number and other type together using '-'".to_string(),
+                        line
+                    ));
                 }
             }
         },
@@ -319,11 +283,18 @@ fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> R
 
             match next_value {
                 Token::Number(next_num) => {
-                    nodes.push(Node::BinaryExpr { op: (Operator::Minus), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                    nodes.push(Node::BinaryExpr { 
+                        op: (Operator::Minus), 
+                        lhs: (Box::new(Node::Int(*num))), 
+                        rhs: (Box::new(Node::Int(*next_num))) 
+                    });
                 },
 
                 _ => {
-                    return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '*'"), line));
+                    return Err(SyntaxError::new(
+                        "Cannot combine Number and other types together using '*'".to_string(), 
+                        line
+                    ));
                 }
             }
         },
@@ -333,19 +304,112 @@ fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> R
 
             match next_value {
                 Token::Number(next_num) => {
-                    nodes.push(Node::BinaryExpr { op: (Operator::Divide), lhs: (Box::new(Node::Int(*num))), rhs: (Box::new(Node::Int(*next_num))) });
+                    nodes.push(Node::BinaryExpr { 
+                        op: (Operator::Divide), 
+                        lhs: (Box::new(Node::Int(*num))), 
+                        rhs: (Box::new(Node::Int(*next_num))) 
+                    });
                 },
 
                 _ => {
-                    return Err(SyntaxError::new(format!("Cannot combine Number and other types together using '/'"), line));
+                    return Err(SyntaxError::new(
+                        "Cannot combine Number and other types together using '/'".to_string(), 
+                        line
+                    ));
                 }
             }
         },
 
-        _ => {
+        // Just number
+        Token::Semicolon => {
             nodes.push(Node::Int(*num));
+        },
+
+        // Error handling
+        Token::Number(_) => {
+            return Err(SyntaxError::new(
+                "Two number tokens found in a row, make sure there isn't whitespace etc. between numbers".to_string(),
+                line
+            ));
+        },
+
+        _ => {
+            return Err(SyntaxError::new(
+                "Unexpected token found after number".to_string(),
+                line
+            ));
         }
     }
 
-    todo!();
+    Ok(nodes)
+}
+
+fn examine_string(iter: &mut Peekable<Iter<Tokens>>, str: &String, line: u64) -> Result<Vec<Node>, SyntaxError> {
+    let mut nodes = Vec::new();
+
+    match iter.peek().unwrap().token {
+        Token::Equal => {
+            // Variable support goes here
+            set_variable(str.to_string(), line, iter).unwrap();
+        },
+        Token::Semicolon => {
+            nodes.push(Node::String(str.to_string()));
+        },
+        Token::Plus => {
+            iter.next();
+            let next_str = &iter.next().unwrap().token;
+
+            match next_str {
+                Token::String(next_str) => {
+                    nodes.push(Node::CombineStr { 
+                        lhs: (Box::new(Node::String(str.to_string()))), 
+                        rhs: (Box::new(Node::String(next_str.to_string()))) 
+                    });
+                },
+
+                _ => {
+                    return Err(SyntaxError::new(
+                        "Cannot combine number and other type using '+'".to_string(), 
+                        line
+                    ));
+                }
+            }
+        }
+
+        _ => {
+            return Err(SyntaxError::new("Expected semicolon".to_string(), line));
+        }
+    } 
+
+    return Ok(nodes);
+}
+
+fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextScope, SyntaxError> {
+    // have to check the next tokens to see the repeat count
+    // More advanced loops can use a proper scope when going into Paren but I won't for this
+    let left_paren = iter.next().unwrap();
+    let value = iter.next().unwrap();
+    let right_paren = iter.next().unwrap();
+
+    // Error checks
+    if matches!(left_paren.token, Token::LeftParen) {
+        return Err(SyntaxError::new("Left paren expected after repeat keyword".to_string(), left_paren.line));
+    }
+    else if matches!(right_paren.token, Token::RightParen) {
+        return Err(SyntaxError::new("Right paren expected after repeat and left paren".to_string(), right_paren.line));
+    }
+    
+    match value.token {
+        Token::Number(num) => {
+            return Ok(NextScope::RepeatState { repeat_count: (num) });
+            // Next scope is managed in Token::LeftBracket
+            
+            // I think next scope should be managed here actually as that will remove the
+            // annoying switch statement in Token::LeftBracket
+        },
+
+        _ => {
+            return Err(SyntaxError::new("Expected number for repeat arg, however got something else".to_string(), line));
+        }
+    }
 }

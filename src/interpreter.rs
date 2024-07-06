@@ -20,9 +20,9 @@ impl RuntimeError {
 
 // I don't think I need to seperate interpret from interpreter as I do not think I will need to call recursion
 fn interpret(instructions: Vec<Node>) {
-    let mut iter: Peekable<Iter<Node>> = instructions.iter().peekable();
+    let iter: Peekable<Iter<Node>> = instructions.iter().peekable();
 
-    while let Some(instruction) = iter.next() {
+    for instruction in iter {
         match instruction {
             Node::Int(_) => todo!(),
             Node::String(_) => todo!(),
