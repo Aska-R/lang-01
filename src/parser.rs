@@ -17,6 +17,16 @@ pub enum Operator {
     Divide,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Comparator {
+    Equal,      // ==
+    NotEqual,   // !=
+    More,       // > 
+    Less,       // <
+    EqualMore,  // => or >=
+    EqualLess,  // =< or <=
+}
+
 /// Node is the struct used for the instructions which will be eventually be interpreted.
 #[derive(Debug, PartialEq)]
 pub enum Node {
@@ -40,6 +50,12 @@ pub enum Node {
         rhs: Box<Node>,
     },
     CombineStr {
+        lhs: Box<Node>,
+        rhs: Box<Node>,
+    },
+    // Comparisions
+    Compare {
+        comparator: Comparator,
         lhs: Box<Node>,
         rhs: Box<Node>,
     },
@@ -115,23 +131,13 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             Token::Repeat => {
                 next_scope = create_repeat(iter, token.line).unwrap();
             },
+            Token::For => todo!(),
+            Token::If => todo!(),
+            Token::Elseif => todo!(),
+            Token::Else => todo!(),
+            Token::While => todo!(),
             Token::Bool(bool) => {
                 nodes.push(Node::Bool(*bool));
-            },
-            Token::Plus => {
-                
-            },
-            Token::Dash => {
-
-            },
-            Token::Star => {
-
-            },
-            Token::Slash => {
-
-            },
-            Token::LeftParen => {
-                
             },
             Token::RightParen => {
                 
@@ -139,20 +145,14 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             Token::LeftBracket => {
                 nodes.push(create_next_scope(iter, &next_scope, token.line).unwrap());
             },
+            
+            // END OF SCOPES -----------------------------------------------------------------------
             Token::RightBracket => {
                 // This occurs when the function is called inside a left bracket
                 if matches!(end_token, Token::RightBracket) {
-                    
+                    // return to previous scope
+                    return Ok(nodes)
                 }
-            },
-            Token::Dot => {
-
-            },
-            Token::Semicolon => {
-                println!("NON-FATAL ERROR - Two semicolons in a row or semicolon was not properly consumed in parser.rs (Latter is fault of language creator)");
-            },
-            Token::Equal => {
-
             },
             Token::Eof => {
                 if matches!(end_token, Token::Eof) {
@@ -162,11 +162,86 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                     return Err(SyntaxError::new("Did not close section".to_string(), token.line));
                 }
             },
-            Token::While => todo!(),
-            Token::For => todo!(),
-            Token::If => todo!(),
-            Token::Elseif => todo!(),
-            Token::Else => todo!(),
+            // -------------------------------------------------------------------------------------
+            
+            // Error handling ----------------------------------------------------------------------
+            Token::Plus => {
+                return Err(SyntaxError::new(
+                    "+ token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::Dash => {
+                return Err(SyntaxError::new(
+                    "- token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::Star => {
+                return Err(SyntaxError::new(
+                    "* token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::Slash => {
+                return Err(SyntaxError::new(
+                    "/ token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::Dot => {
+                return Err(SyntaxError::new(
+                    "Dot token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::Semicolon => {
+                println!("NON-FATAL ERROR - Two semicolons in a row or semicolon was not properly consumed in parser.rs (Latter is fault of language creator)");
+            },
+            Token::Equal => {
+                return Err(SyntaxError::new(
+                    "Equal token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                ));
+            },
+            Token::LeftParen => {
+                return Err(SyntaxError::new(
+                    "} token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            // Comparision tokens
+            Token::NotEqual => {
+                return Err(SyntaxError::new(
+                    "!= token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            Token::More => {
+                return Err(SyntaxError::new(
+                    "> token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            Token::Less => {
+                return Err(SyntaxError::new(
+                    "< token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            Token::EqualMore => {
+                return Err(SyntaxError::new(
+                    ">= or => token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            Token::EqualLess => {
+                return Err(SyntaxError::new(
+                    "<= or =< token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
+                    token.line
+                )); 
+            },
+            // -------------------------------------------------------------------------------------
         }
     }
     todo!();
@@ -174,7 +249,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
 
 fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Tokens>>) -> Result<Vec<Node>, SyntaxError> {
     let mut nodes: Vec<Node> = Vec::new();
-
+    
     // Variable support goes here
     iter.next(); // This is the equal sign
     let variable_value = iter.next().unwrap();
@@ -381,7 +456,7 @@ fn examine_string(iter: &mut Peekable<Iter<Tokens>>, str: &String, line: u64) ->
         }
     } 
 
-    return Ok(nodes);
+    Ok(nodes)
 }
 
 fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextScope, SyntaxError> {
@@ -401,7 +476,7 @@ fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextSco
     
     match value.token {
         Token::Number(num) => {
-            return Ok(NextScope::RepeatState { repeat_count: (num) });
+            Ok(NextScope::RepeatState { repeat_count: (num) })
             // Next scope is managed in Token::LeftBracket
             
             // I think next scope should be managed here actually as that will remove the
@@ -409,7 +484,23 @@ fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextSco
         },
 
         _ => {
-            return Err(SyntaxError::new("Expected number for repeat arg, however got something else".to_string(), line));
+            Err(SyntaxError::new("Expected number for repeat arg, however got something else".to_string(), line))
         }
     }
 }
+
+fn create_if(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
+    if !matches!(iter.next().unwrap().token, Token::LeftParen) {
+        return Err(SyntaxError::new(
+            "Expected ( found something else".to_string(),
+            line
+        ));
+    }
+
+    let token = &iter.next().unwrap().token;
+    
+    
+
+    todo!();
+}
+

@@ -16,13 +16,18 @@ pub enum Token {
     RightBracket,
     Dot,
     Semicolon,
-    Equal,
     While,
     For,
     Repeat,
     If,
     Elseif,
     Else,
+    Equal,
+    NotEqual,
+    More,
+    Less,
+    EqualMore,
+    EqualLess,
     Eof,
 }
 
@@ -167,6 +172,11 @@ pub fn dump_tokens(tokens: Vec<Tokens>) {
             Token::If => todo!(),
             Token::Elseif => todo!(),
             Token::Else => todo!(),
+            Token::NotEqual => todo!(),
+            Token::More => todo!(),
+            Token::Less => todo!(),
+            Token::EqualMore => todo!(),
+            Token::EqualLess => todo!(),
         }
     }
 }

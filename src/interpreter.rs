@@ -34,6 +34,7 @@ fn interpret(instructions: Vec<Node>) {
             Node::Eof => todo!(),
             Node::SetVariable { name: _, value: _ } => todo!(),
             Node::Function { name: _, nodes: _ } => todo!(),
+            Node::Compare { comparator, lhs, rhs } => todo!(),
         }
     }
 }
