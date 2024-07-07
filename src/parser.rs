@@ -54,11 +54,27 @@ pub enum Node {
         rhs: Box<Node>,
     },
     // Comparisions
-    Compare {
+    IfBinaryCompare {
         comparator: Comparator,
         lhs: Box<Node>,
         rhs: Box<Node>,
     },
+    IfUnaryCompare {
+        expected: bool,
+        actual: Box<Node>,
+    },
+    IfElseBinaryCompare {
+        comparator: Comparator,
+        lhs: Box<Node>,
+        rhs: Box<Node>
+    },
+    IfElseUnaryCompare {
+        expected: bool,
+        actual: Box<Node>,
+    },
+    // Else {
+        
+    // }
     // Other
     Repeat {
         count: i64,
@@ -69,27 +85,6 @@ pub enum Node {
         nodes: Vec<Node>
     },
     Eof
-}
-
-/// Next scope is used when the parser reaches a scope indicator, used the next time the program goes into a scope
-// Does this mean the error messages will be terrible? Yes. Do I have time to fix it now? No. :(
-pub enum NextScope {
-    Default, 
-    IfState {
-        check: Box<Node> // This node has to return either true or false
-    },
-    ElseIfState { // The check if this should run will be done in runtime
-        check: Box<Node>
-    },
-    ElseState,
-    WhileState {
-        check: Box<Node>
-    },
-    RepeatState {
-        repeat_count: i64
-    },
-    VariableSetState,
-    FunctionCreateState,
 }
 
 #[derive(Debug, PartialEq)]
@@ -115,7 +110,6 @@ pub fn parse(tokens: Vec<Tokens>) -> Result<Vec<Node>, SyntaxError> {
 
 fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result<Vec<Node>, SyntaxError> {
     let mut nodes: Vec<Node> = Vec::new();
-    let mut next_scope: NextScope = NextScope::Default;
 
     while let Some(token) = iter.next() {
         match &token.token {
@@ -129,7 +123,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 // This is where tokens that don't fall under other token sections go
             },
             Token::Repeat => {
-                next_scope = create_repeat(iter, token.line).unwrap();
+                nodes.push(create_repeat(iter, token.line).unwrap());
             },
             Token::For => todo!(),
             Token::If => todo!(),
@@ -143,7 +137,13 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 
             },
             Token::LeftBracket => {
-                nodes.push(create_next_scope(iter, &next_scope, token.line).unwrap());
+                // I'm going to start managing next_scope in the repeat tokens now
+                // nodes.push(create_next_scope(iter, &next_scope, token.line).unwrap());
+
+                return Err(SyntaxError::new(
+                    "{ token found in unexpected location".to_string(),
+                    token.line
+                ));
             },
             
             // END OF SCOPES -----------------------------------------------------------------------
@@ -212,34 +212,57 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             },
             // Comparision tokens
             Token::NotEqual => {
+                if matches!(end_token, Token::Comparator) {
+                    return Ok(nodes);
+                }
+
                 return Err(SyntaxError::new(
                     "!= token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
                     token.line
                 )); 
             },
             Token::More => {
+                if matches!(end_token, Token::Comparator) {
+                    return Ok(nodes);
+                }
+
                 return Err(SyntaxError::new(
                     "> token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
                     token.line
                 )); 
             },
             Token::Less => {
+                if matches!(end_token, Token::Comparator) {
+                    return Ok(nodes);
+                }
+
                 return Err(SyntaxError::new(
                     "< token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
                     token.line
                 )); 
             },
             Token::EqualMore => {
+                if matches!(end_token, Token::Comparator) {
+                    return Ok(nodes);
+                }
+
                 return Err(SyntaxError::new(
                     ">= or => token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
                     token.line
                 )); 
             },
             Token::EqualLess => {
+                if matches!(end_token, Token::Comparator) {
+                    return Ok(nodes);
+                }
+
                 return Err(SyntaxError::new(
                     "<= or =< token found in unexpected location, this error could also be the result of programming language creator's error".to_string(),
                     token.line
                 )); 
+            },
+            Token::Comparator => {
+                return Err(SyntaxError::new("Comparator token found, this is impossible".to_string(), token.line));
             },
             // -------------------------------------------------------------------------------------
         }
@@ -283,28 +306,30 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
     } 
 }
 
-fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, line: u64) -> Result<Node, SyntaxError> {
-    // Possible optimisation here, instead of putting the nodes into new_nodes have it directly edit the nodes
-    let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
+// THIS IS NO LONGER USED I'M KEEPING IT HERE FOR REFERENCE ONLY -----------------------------------
+// fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, line: u64) -> Result<Node, SyntaxError> {
+//     // Possible optimisation here, instead of putting the nodes into new_nodes have it directly edit the nodes
+//     let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
 
-    // Depending on which the next scope will be what affect what the next scope 
-    match next_scope {
-        NextScope::Default => {
-            Err(SyntaxError::new("Unset scopes are not supported".to_string(), line))
-        },
-        NextScope::IfState { check: _ } => todo!(),
-        NextScope::ElseIfState { check: _ } => todo!(),
-        NextScope::ElseState => todo!(),
-        NextScope::WhileState { check: _ } => todo!(),
-        NextScope::RepeatState { repeat_count } => {
-            Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes })
-        },
-        NextScope::VariableSetState => todo!(),
-        NextScope::FunctionCreateState => {
-            todo!();
-        },
-    }
-}
+//     // Depending on which the next scope will be what affect what the next scope 
+//     match next_scope {
+//         NextScope::Default => {
+//             Err(SyntaxError::new("Unset scopes are not supported".to_string(), line))
+//         },
+//         NextScope::IfState { check: _ } => todo!(),
+//         NextScope::ElseIfState { check: _ } => todo!(),
+//         NextScope::ElseState => todo!(),
+//         NextScope::WhileState { check: _ } => todo!(),
+//         NextScope::RepeatState { repeat_count } => {
+//             Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes })
+//         },
+//         NextScope::VariableSetState => todo!(),
+//         NextScope::FunctionCreateState => {
+//             todo!();
+//         },
+//     }
+// }
+// -------------------------------------------------------------------------------------------------
 
 fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> Result<Vec<Node>, SyntaxError> {
     let mut nodes: Vec<Node> =  Vec::new();
@@ -459,7 +484,7 @@ fn examine_string(iter: &mut Peekable<Iter<Tokens>>, str: &String, line: u64) ->
     Ok(nodes)
 }
 
-fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextScope, SyntaxError> {
+fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
     // have to check the next tokens to see the repeat count
     // More advanced loops can use a proper scope when going into Paren but I won't for this
     let left_paren = iter.next().unwrap();
@@ -467,20 +492,18 @@ fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextSco
     let right_paren = iter.next().unwrap();
 
     // Error checks
-    if matches!(left_paren.token, Token::LeftParen) {
+    if !matches!(left_paren.token, Token::LeftParen) {
         return Err(SyntaxError::new("Left paren expected after repeat keyword".to_string(), left_paren.line));
     }
-    else if matches!(right_paren.token, Token::RightParen) {
+    else if !matches!(right_paren.token, Token::RightParen) {
         return Err(SyntaxError::new("Right paren expected after repeat and left paren".to_string(), right_paren.line));
     }
     
     match value.token {
         Token::Number(num) => {
-            Ok(NextScope::RepeatState { repeat_count: (num) })
-            // Next scope is managed in Token::LeftBracket
-            
-            // I think next scope should be managed here actually as that will remove the
-            // annoying switch statement in Token::LeftBracket
+            iter.next();
+            let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
+            return Ok(Node::Repeat { count: num, nodes: new_nodes });
         },
 
         _ => {
@@ -490,17 +513,26 @@ fn create_repeat(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<NextSco
 }
 
 fn create_if(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
+    // Makes sure that the 
     if !matches!(iter.next().unwrap().token, Token::LeftParen) {
         return Err(SyntaxError::new(
-            "Expected ( found something else".to_string(),
+            "If statement requires ( around comparision".to_string(),
             line
         ));
     }
 
-    let token = &iter.next().unwrap().token;
+    // I think I have to go in a loop to fully process whatever is on the lhs
+    //let lhs_nodes = put_into_nodes(iter, Token::Comparator).unwrap();
+    // Now need to work out the token that resulted in put_into_nodes ending
     
-    
-
+    // If rhs is { then lhs has to be a bool
+    // I've realised that if I was to put a bool in without any comparator this wouldnt work
+    // so I'm goign to work on this later.
+        
     todo!();
 }
 
+fn create_else(_iter: &mut Peekable<Iter<Tokens>>, _line: u64) -> Result<Node, SyntaxError> {
+
+    todo!();
+}

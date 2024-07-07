@@ -34,7 +34,10 @@ fn interpret(instructions: Vec<Node>) {
             Node::Eof => todo!(),
             Node::SetVariable { name: _, value: _ } => todo!(),
             Node::Function { name: _, nodes: _ } => todo!(),
-            Node::Compare { comparator, lhs, rhs } => todo!(),
+            Node::IfBinaryCompare { comparator: _, lhs: _, rhs: _ } => todo!(),
+            Node::IfUnaryCompare { expected: _, actual: _ } => todo!(),
+            Node::IfElseBinaryCompare { comparator: _, lhs: _, rhs: _ } => todo!(),
+            Node::IfElseUnaryCompare { expected: _, actual: _ } => todo!(),
         }
     }
 }

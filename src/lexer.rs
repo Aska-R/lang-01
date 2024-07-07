@@ -28,6 +28,7 @@ pub enum Token {
     Less,
     EqualMore,
     EqualLess,
+    Comparator,
     Eof,
 }
 
@@ -177,6 +178,7 @@ pub fn dump_tokens(tokens: Vec<Tokens>) {
             Token::Less => todo!(),
             Token::EqualMore => todo!(),
             Token::EqualLess => todo!(),
+            Token::Comparator => println!("Comparator, IT IS IMPOSSIBLE FOR THIS TO HAPPEN"),
         }
     }
 }
