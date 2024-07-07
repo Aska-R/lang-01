@@ -16,19 +16,65 @@ impl RuntimeError {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub enum Variable {
     Int {
+        name: String,
         num: i64
     },
+    Null,
 }
 
-pub enum Function {
+impl Variable {
+    // I should work out how to use self but with vectors at some point
+    fn get_variable(variables: Vec<Variable>, find_name: String) -> Result<Variable, RuntimeError> {
+        for variable in variables {
+            match variable {
+                Variable::Int { name, num } => {
+                    if name == find_name {
+                        return Ok(variable);
+                    }
+                },
 
+                // Error handling
+                Variable::Null => {
+                    return Err(RuntimeError::new(
+                        "Null variable has been saved to variable storage".to_string()
+                    ));
+                }
+            }
+        }
+
+        return Ok(Variable::Null);
+    }
+}
+
+pub struct Function {
+    name: String,
+    nodes: Vec<Node>,
+}
+
+impl Function {
+    fn null() -> Function {
+        let nodes: Vec<Node> = Vec::new();
+
+        return Function { name: "Null".to_string(), nodes: nodes}
+    }
+
+    fn get_function(functions: Vec<Function>, find_name: String) -> Result<Function, RuntimeError> {
+        for function in functions {
+            if function.name == find_name {
+                return Ok(function);
+            }
+        }
+
+        return Ok(Self::null());
+    }
 }
 
 
 // I don't think I need to seperate interpret from interpreter as I do not think I will need to call recursion
-fn interpret(instructions: Vec<Node>, variables: &Vec<Variable>, functions: &Vec<Function>) -> Result<(), RuntimeError> {
+fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: &mut Vec<Function>) -> Result<(), RuntimeError> {
     let iter: Peekable<Iter<Node>> = instructions.iter().peekable();
     
 
@@ -42,7 +88,9 @@ fn interpret(instructions: Vec<Node>, variables: &Vec<Variable>, functions: &Vec
             },
 
             // Statements
-            Node::SetVariable { name: _, value: _ } => todo!(),
+            Node::SetVariable { var } => {
+                //variables.push(var.clone());
+            },
             Node::Function { name: _, nodes: _ } => todo!(),
 
             // Comparisons
@@ -73,3 +121,4 @@ fn interpret(instructions: Vec<Node>, variables: &Vec<Variable>, functions: &Vec
 
     todo!();
 }
+

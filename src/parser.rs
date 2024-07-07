@@ -1,5 +1,6 @@
 // Reimplementation of the parser that isn't terrible implemented
 use crate::lexer::{Tokens, Token}; 
+use crate::interpreter::{Variable, Function};
 
 // Tokens is a struct with a Token and a line number
 use std::iter::Peekable;
@@ -27,6 +28,7 @@ pub enum Comparator {
     EqualLess,  // =< or <=
 }
 
+
 /// Node is the struct used for the instructions which will be eventually be interpreted.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
@@ -36,8 +38,7 @@ pub enum Node {
     Bool(bool),
     // Set Variables
     SetVariable {
-        name: String,
-        value: Box<Node>,
+        var: Variable,
     },
     // Expressions
     UnaryExpr {
