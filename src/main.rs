@@ -35,6 +35,4 @@ fn main() {
     let _instructions = parser::parse(tokens).unwrap();
 
     println!("Input file: {}", input.clone());
-
-    
 }

@@ -1,1 +1,13 @@
 print("test");
+
+variable = true;
+
+if(variable) {
+    print("always happens");
+}
+else if(variable) {
+    print("never happens");
+}
+else {
+    print("never ever happens");
+}

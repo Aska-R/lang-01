@@ -9,7 +9,7 @@ use std::slice::Iter;
 mod tests;
 
 /// Operators are used for operations (+, -, *, /)
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
     Plus,
     Minus, 
@@ -17,7 +17,7 @@ pub enum Operator {
     Divide,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Comparator {
     Equal,      // ==
     NotEqual,   // !=
@@ -28,7 +28,7 @@ pub enum Comparator {
 }
 
 /// Node is the struct used for the instructions which will be eventually be interpreted.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     // Values
     Int(i64),
@@ -58,23 +58,27 @@ pub enum Node {
         comparator: Comparator,
         lhs: Box<Node>,
         rhs: Box<Node>,
+        nodes: Vec<Node>,
     },
     IfUnaryCompare {
         expected: bool,
         actual: Box<Node>,
+        nodes: Vec<Node>,
     },
     IfElseBinaryCompare {
         comparator: Comparator,
         lhs: Box<Node>,
-        rhs: Box<Node>
+        rhs: Box<Node>,
+        nodes: Vec<Node>,
     },
     IfElseUnaryCompare {
         expected: bool,
         actual: Box<Node>,
+        nodes: Vec<Node>
     },
-    // Else {
-        
-    // }
+    Else {
+        nodes: Vec<Node>
+    },
     // Other
     Repeat {
         count: i64,
@@ -267,7 +271,11 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             // -------------------------------------------------------------------------------------
         }
     }
-    todo!();
+    
+    return Err(SyntaxError::new(
+        "End token not found".to_string(),
+        0
+    ))
 }
 
 fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Tokens>>) -> Result<Vec<Node>, SyntaxError> {
@@ -305,31 +313,6 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
         }
     } 
 }
-
-// THIS IS NO LONGER USED I'M KEEPING IT HERE FOR REFERENCE ONLY -----------------------------------
-// fn create_next_scope(iter: &mut Peekable<Iter<Tokens>>, next_scope: &NextScope, line: u64) -> Result<Node, SyntaxError> {
-//     // Possible optimisation here, instead of putting the nodes into new_nodes have it directly edit the nodes
-//     let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
-
-//     // Depending on which the next scope will be what affect what the next scope 
-//     match next_scope {
-//         NextScope::Default => {
-//             Err(SyntaxError::new("Unset scopes are not supported".to_string(), line))
-//         },
-//         NextScope::IfState { check: _ } => todo!(),
-//         NextScope::ElseIfState { check: _ } => todo!(),
-//         NextScope::ElseState => todo!(),
-//         NextScope::WhileState { check: _ } => todo!(),
-//         NextScope::RepeatState { repeat_count } => {
-//             Ok(Node::Repeat { count: *repeat_count, nodes: new_nodes })
-//         },
-//         NextScope::VariableSetState => todo!(),
-//         NextScope::FunctionCreateState => {
-//             todo!();
-//         },
-//     }
-// }
-// -------------------------------------------------------------------------------------------------
 
 fn examine_numbers(iter: &mut Peekable<Iter<Tokens>>, num: &i64, line: u64) -> Result<Vec<Node>, SyntaxError> {
     let mut nodes: Vec<Node> =  Vec::new();
@@ -522,7 +505,7 @@ fn create_if(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, Synta
     }
 
     // I think I have to go in a loop to fully process whatever is on the lhs
-    //let lhs_nodes = put_into_nodes(iter, Token::Comparator).unwrap();
+    // let lhs_nodes = put_into_nodes(iter, Token::Comparator).unwrap();
     // Now need to work out the token that resulted in put_into_nodes ending
     
     // If rhs is { then lhs has to be a bool
@@ -532,7 +515,14 @@ fn create_if(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, Synta
     todo!();
 }
 
-fn create_else(_iter: &mut Peekable<Iter<Tokens>>, _line: u64) -> Result<Node, SyntaxError> {
+fn create_else(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
+    if !matches!(iter.next().unwrap().token, Token::LeftBracket) {
+        return Err(SyntaxError::new(
+            "Expected { got different token instead".to_string(),
+            line
+        ));
+    }
 
-    todo!();
+    let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
+    return Ok(Node::Else { nodes: (new_nodes) });
 }
