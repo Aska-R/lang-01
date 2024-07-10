@@ -1,6 +1,6 @@
 // Reimplementation of the parser that isn't terrible implemented
 use crate::lexer::{Tokens, Token}; 
-use crate::interpreter::{Variable, Function};
+use crate::interpreter::{Variable};
 
 // Tokens is a struct with a Token and a line number
 use std::iter::Peekable;
@@ -89,6 +89,10 @@ pub enum Node {
         name: String,
         nodes: Vec<Node>
     },
+    TemplateFunction {
+        name: String,
+        args: Vec<Variable>
+    },
     Eof
 }
 
@@ -125,8 +129,11 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 nodes.append(&mut examine_string(iter, str, token.line).unwrap());
             },
             Token::Other(_) => {
-                // This is where tokens that don't fall under other token sections go
+                
             },
+            Token::Function => {
+
+            }
             Token::Repeat => {
                 nodes.push(create_repeat(iter, token.line).unwrap());
             },
@@ -532,4 +539,26 @@ fn create_else(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, Syn
 
     let new_nodes = put_into_nodes(iter, Token::RightBracket).unwrap();
     return Ok(Node::Else { nodes: (new_nodes) });
+}
+
+fn declare_function(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
+    if !matches!(iter.next().unwrap().token, Token::LeftParen) {
+        return Err(SyntaxError::new(
+            "Expected ( got different token instead".to_string(),
+            line
+        ));
+    }
+
+    todo!();
+}
+
+fn create_function_call(iter: &mut Peekable<Iter<Tokens>>, line: u64) -> Result<Node, SyntaxError> {
+    if !matches!(iter.next().unwrap().token, Token::LeftParen) {
+        return Err(SyntaxError::new(
+            "Expected ( got different token instead".to_string(),
+            line
+        ));
+    }
+
+    todo!();
 }

@@ -34,12 +34,16 @@ impl Variable {
     fn get_variable(variables: Vec<Variable>, find_name: String) -> Result<Variable, RuntimeError> {
         for variable in variables {
             match variable {
-                Variable::Int { name, num } => {
-                    if name == find_name {
+                Variable::Int { ref name, num: _  } => {
+                    if *name == find_name {
                         return Ok(variable);
                     }
                 },
-                Variable::String { name, str } => todo!(),
+                Variable::String { ref name, str: _ } => {
+                    if *name == find_name {
+                        return Ok(variable);
+                    }
+                },
 
                 // Error handling
                 Variable::Null => {
@@ -57,13 +61,15 @@ impl Variable {
 pub struct Function {
     name: String,
     nodes: Vec<Node>,
+    args: Vec<Variable>
 }
 
 impl Function {
     fn null() -> Function {
         let nodes: Vec<Node> = Vec::new();
-
-        return Function { name: "null".to_string(), nodes}
+        let args: Vec<Variable> = Vec::new();
+        
+        return Function { name: "null".to_string(), nodes, args}
     }
 
     fn get_function(functions: Vec<Function>, find_name: String) -> Function {
@@ -84,8 +90,9 @@ impl Function {
         }
 
         todo!();
-        // Still need to work out how to parse args into functions
-        //interpret(function.nodes, )
+
+        // variables here would be the arguments passed into the function
+        // interpret(function.nodes, )
     }   
 }
 
@@ -104,16 +111,17 @@ fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: 
             },
 
             // Statements
-            Node::SetVariable { var } => {
+            Node::SetVariable { var: _ } => {
                 //variables.push(var.clone());
             },
             Node::Function { name: _, nodes: _ } => todo!(),
+            Node::TemplateFunction { name, args } => todo!(),
 
             // Comparisons
-            Node::IfBinaryCompare { comparator: _, lhs: _, rhs: _, nodes } => todo!(),
-            Node::IfUnaryCompare { expected: _, actual: _, nodes } => todo!(),
-            Node::IfElseBinaryCompare { comparator, lhs, rhs, nodes } => todo!(),
-            Node::IfElseUnaryCompare { expected: _, actual: _, nodes } => todo!(),
+            Node::IfBinaryCompare { comparator: _, lhs: _, rhs: _, nodes: _ } => todo!(),
+            Node::IfUnaryCompare { expected: _, actual: _, nodes: _ } => todo!(),
+            Node::IfElseBinaryCompare { comparator: _, lhs: _, rhs: _, nodes: _ } => todo!(),
+            Node::IfElseUnaryCompare { expected: _, actual: _, nodes: _ } => todo!(),
             
             // EOF
             Node::Eof => return Ok(()),

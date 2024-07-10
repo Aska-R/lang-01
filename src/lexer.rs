@@ -15,6 +15,7 @@ pub enum Token {
     LeftBracket,
     RightBracket,
     Dot,
+    Comma,
     Semicolon,
     While,
     For,
@@ -29,6 +30,7 @@ pub enum Token {
     EqualMore,
     EqualLess,
     Comparator,
+    Function,
     Eof,
 }
 
@@ -98,6 +100,7 @@ pub fn tokenizer(input: String) -> Vec<Tokens> {
             },
             '。' | '.' => tokens.push(Tokens::new(Token::Dot, line)),
             ';' | '；' => tokens.push(Tokens::new(Token::Semicolon, line)),
+            ',' | '、' => tokens.push(Tokens::new(Token::Comma, line)),
             '=' => tokens.push(Tokens::new(Token::Equal, line)),
 
             _ => {
@@ -130,6 +133,10 @@ pub fn tokenizer(input: String) -> Vec<Tokens> {
                         // if else would be implemented here
                         todo!();
                     }
+                    "fn" | "func" | "function" => {
+                        tokens.push(Tokens::new(Token::Function, line));
+                    }
+
                     
                     _ => {
                         tokens.push(Tokens::new(Token::Other(s), line));
@@ -167,18 +174,19 @@ pub fn dump_tokens(tokens: Vec<Tokens>) {
             Token::Equal => println!("="),
             Token::LeftBracket => println!("{{"),
             Token::RightBracket => println!("}}"),
-            Token::While => todo!(),
-            Token::For => todo!(),
+            Token::While => println!("While"),
+            Token::For => println!("For"),
             Token::Repeat => println!("Repeat"),
-            Token::If => todo!(),
-            Token::Elseif => todo!(),
-            Token::Else => todo!(),
-            Token::NotEqual => todo!(),
-            Token::More => todo!(),
-            Token::Less => todo!(),
-            Token::EqualMore => todo!(),
-            Token::EqualLess => todo!(),
+            Token::If => println!("if"),
+            Token::Elseif => println!("else if"),
+            Token::Else => println!("else"),
+            Token::NotEqual => println!("!="),
+            Token::More => println!(">"),
+            Token::Less => println!("<"),
+            Token::EqualMore => println!(">="),
+            Token::EqualLess => println!("<="),
             Token::Comparator => println!("Comparator, IT IS IMPOSSIBLE FOR THIS TO HAPPEN"),
+            Token::Function => println!("Function"),
         }
     }
 }
