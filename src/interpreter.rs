@@ -22,6 +22,10 @@ pub enum Variable {
         name: String,
         num: i64
     },
+    String {
+        name: String,
+        str: String
+    },
     Null,
 }
 
@@ -35,6 +39,7 @@ impl Variable {
                         return Ok(variable);
                     }
                 },
+                Variable::String { name, str } => todo!(),
 
                 // Error handling
                 Variable::Null => {
@@ -58,18 +63,30 @@ impl Function {
     fn null() -> Function {
         let nodes: Vec<Node> = Vec::new();
 
-        return Function { name: "Null".to_string(), nodes: nodes}
+        return Function { name: "null".to_string(), nodes}
     }
 
-    fn get_function(functions: Vec<Function>, find_name: String) -> Result<Function, RuntimeError> {
+    fn get_function(functions: Vec<Function>, find_name: String) -> Function {
         for function in functions {
             if function.name == find_name {
-                return Ok(function);
+                return function;
             }
         }
 
-        return Ok(Self::null());
+        return Self::null();
     }
+
+    pub fn run_function(functions: Vec<Function>, function_name: String) -> Result<Function, RuntimeError> {
+        let function: Function = Function::get_function(functions, function_name);
+
+        if function.name == "null".to_string() {
+            return Err(RuntimeError::new("Failed to find function".to_string()));
+        }
+
+        todo!();
+        // Still need to work out how to parse args into functions
+        //interpret(function.nodes, )
+    }   
 }
 
 
@@ -77,7 +94,6 @@ impl Function {
 fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: &mut Vec<Function>) -> Result<(), RuntimeError> {
     let iter: Peekable<Iter<Node>> = instructions.iter().peekable();
     
-
     for instruction in iter {
         match instruction {
             // Loops
@@ -118,7 +134,7 @@ fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: 
             // -------------------------------------------------------------------------------------
         }
     }
-
-    todo!();
+    
+    return Ok(());
 }
 

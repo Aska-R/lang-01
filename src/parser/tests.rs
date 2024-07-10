@@ -32,14 +32,10 @@ fn test_set_variable() {
     assert_eq!(
         set_variable("variable_name".to_string(), 42, &mut iter), 
         create_fake_node(Node::SetVariable 
-            {
-                name: ("variable_name".to_string()), 
-                value: (
-                    Box::new(
-                        Node::String("the answer to life the universe and everything".to_string())
-                    )
-                ),
-            }
+            { var: Variable::String { 
+                name: "variable_name".to_string(), 
+                str: "the answer to life the universe and everything".to_string() 
+            }}
         )
     );
 }

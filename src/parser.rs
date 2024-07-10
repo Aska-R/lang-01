@@ -290,7 +290,13 @@ fn set_variable(variable_name: String, line: u64, iter: &mut Peekable<Iter<Token
         Token::String(value_str) => {
             match op_or_end.token {
                 Token::Semicolon => {
-                    nodes.push(Node::SetVariable { name: variable_name.to_string(), value: Box::new(Node::String(value_str.to_string())) });
+                    //nodes.push(Node::SetVariable { name: variable_name.to_string(), value: Box::new(Node::String(value_str.to_string())) });
+                    nodes.push(Node::SetVariable {
+                        var: Variable::String {
+                            name: variable_name.to_string(),
+                            str: value_str.to_string()
+                        }
+                    });
                     Ok(nodes)
                 },
                 Token::Plus => {
