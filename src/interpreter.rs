@@ -58,8 +58,6 @@ impl Variable {
     }
 }
 
-
-#[derive(Clone, Debug, PartialEq)]
 pub struct Function {
     name: String,
     nodes: Vec<Node>,
@@ -84,23 +82,18 @@ impl Function {
         return Self::null();
     }
 
-    pub fn run_function(mut functions: Vec<Function>, function_name: String) -> Result<(), RuntimeError> {
-        let function: Function = Function::get_function(functions.clone(), function_name);
+    pub fn run_function(functions: Vec<Function>, function_name: String) -> Result<Function, RuntimeError> {
+        let function: Function = Function::get_function(functions, function_name);
 
         if function.name == "null".to_string() {
             return Err(RuntimeError::new("Failed to find function".to_string()));
         }
 
-        let mut variables: Vec<Variable> = function.args;
+        todo!();
+
         // variables here would be the arguments passed into the function
-        return Ok(interpret(function.nodes, &mut variables, &mut functions)?);
+        // interpret(function.nodes, )
     }   
-
-    pub fn create_function(functions: &mut Vec<Function>, function_name: String, function_nodes: Vec<Node>, args: Vec<Variable>) {
-        let function: Function = Function { name: function_name, nodes: function_nodes, args};
-
-        functions.push(function);
-    }
 }
 
 
@@ -121,15 +114,8 @@ fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: 
             Node::SetVariable { var: _ } => {
                 //variables.push(var.clone());
             },
-            // Run function
-            Node::Function { name, args } => {
-                // Error prone line
-                Function::run_function(functions.to_vec(), name.to_string());
-            },
-            // Define function
-            Node::TemplateFunction { name, nodes, args } => {
-                todo!();
-            },
+            Node::Function { name: _, nodes: _ } => todo!(),
+            Node::TemplateFunction { name, args } => todo!(),
 
             // Comparisons
             Node::IfBinaryCompare { comparator: _, lhs: _, rhs: _, nodes: _ } => todo!(),
