@@ -187,6 +187,7 @@ pub fn dump_tokens(tokens: Vec<Tokens>) {
             Token::EqualLess => println!("<="),
             Token::Comparator => println!("Comparator, IT IS IMPOSSIBLE FOR THIS TO HAPPEN"),
             Token::Function => println!("Function"),
+            Token::Comma => println!(","),
         }
     }
 }
