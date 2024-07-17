@@ -5,6 +5,7 @@ use lexer::dump_tokens;
 mod lexer;
 mod parser;
 mod interpreter;
+mod st;
 
 fn main() {
     let _short_input = "3+3-2/()1*\"123\"456\"789\"";
@@ -24,15 +25,22 @@ fn main() {
     \"true\"";
     let _repeat_test_input = "repeat(3) { abc 7 + 3 * 7 \"test\" }";
     let _invalid_test = "1+a";
+    let _print_test = "print(\"abc\")";
 
     // Select which test input you want to use here
-    let input = _repeat_test_input.to_string(); 
+    let input = _print_test.to_string(); 
     println!("{}", input);
 
     let tokens = lexer::tokenizer(input.clone());
     dump_tokens(tokens.clone());
 
-    let _instructions = parser::parse(tokens).unwrap();
+    let instructions = parser::parse(tokens).unwrap();
 
     println!("Input file: {}", input.clone());
+
+    println!("--- RUNNING ---");
+    
+    let mut variables: Vec<interpreter::Variable> = Vec::new();
+    let mut functions: Vec<interpreter::Function> = Vec::new();
+    interpreter::interpret(instructions, &mut variables, &mut functions).unwrap();
 }

@@ -3,6 +3,10 @@ use crate::parser::Node;
 use std::iter::Peekable;
 use std::slice::Iter;
 
+#[cfg(test)]
+mod tests;
+
+
 #[derive(Debug)]
 pub struct RuntimeError {
     message: String
@@ -67,6 +71,10 @@ pub struct Function {
 }
 
 impl Function {
+    fn new(name: String, nodes: Vec<Node>, args: Vec<Variable>) -> Function {
+        return Function { name, nodes, args };
+    }
+
     fn null() -> Function {
         let nodes: Vec<Node> = Vec::new();
         let args: Vec<Variable> = Vec::new();
@@ -105,7 +113,7 @@ impl Function {
 
 
 // I don't think I need to seperate interpret from interpreter as I do not think I will need to call recursion
-fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: &mut Vec<Function>) -> Result<(), RuntimeError> {
+pub fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: &mut Vec<Function>) -> Result<(), RuntimeError> {
     let iter: Peekable<Iter<Node>> = instructions.iter().peekable();
     
     for instruction in iter {
@@ -140,6 +148,9 @@ fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: 
             // EOF
             Node::Eof => return Ok(()),
             
+            // Built-in functions
+            Node::Print { str } => println!("{str}"),
+
             // Error handling ----------------------------------------------------------------------
             Node::Else { nodes: _ } => {
                 return Err(RuntimeError::new(

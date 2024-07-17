@@ -31,6 +31,7 @@ pub enum Token {
     EqualLess,
     Comparator,
     Function,
+    Print,
     Eof,
 }
 
@@ -136,6 +137,9 @@ pub fn tokenizer(input: String) -> Vec<Tokens> {
                     "fn" | "func" | "function" => {
                         tokens.push(Tokens::new(Token::Function, line));
                     }
+                    "print" => {
+                        tokens.push(Tokens::new(Token::Print, line))
+                    }
 
                     
                     _ => {
@@ -188,6 +192,7 @@ pub fn dump_tokens(tokens: Vec<Tokens>) {
             Token::Comparator => println!("Comparator, IT IS IMPOSSIBLE FOR THIS TO HAPPEN"),
             Token::Function => println!("Function"),
             Token::Comma => println!(","),
+            Token::Print => println!("Print"),
         }
     }
 }

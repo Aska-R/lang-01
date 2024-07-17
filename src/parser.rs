@@ -96,7 +96,11 @@ pub enum Node {
         nodes: Vec<Node>,
         args: Vec<Variable>
     },
-    Eof
+    Eof,
+    // Base functions
+    Print {
+        str: String
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -169,6 +173,38 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                     token.line
                 ));
             },
+
+            // Functions
+            Token::Print => {
+                if !matches!(iter.next().unwrap().token, Token::LeftParen) {
+                    return Err(SyntaxError::new(
+                        "Expected ( found other token".to_string(),
+                        token.line
+                    ))
+                }
+
+                let arg_tokens = iter.next().unwrap();
+                match &arg_tokens.token {
+                    Token::String(str) => {
+                        nodes.push(Node::Print { str: str.to_string() });
+                    },
+
+                    _ => {
+                        return Err(SyntaxError::new(
+                            "Expected String found other token instead".to_string(),
+                            token.line
+                        ));
+                    }
+
+                }
+
+                if !matches!(iter.next().unwrap().token, Token::RightParen) {
+                    return Err(SyntaxError::new(
+                        "Expected ) found other token instead".to_string(),
+                        token.line
+                    ));
+                }
+            }
             
             // END OF SCOPES -----------------------------------------------------------------------
             Token::RightBracket => {
@@ -181,6 +217,7 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             Token::Eof => {
                 if matches!(end_token, Token::Eof) {
                     nodes.push(Node::Eof);
+                    return Ok(nodes);
                 }
                 else {
                     return Err(SyntaxError::new("Did not close section".to_string(), token.line));
