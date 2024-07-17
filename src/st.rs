@@ -1,4 +1,4 @@
-use crate::{interpreter::Function};
+use crate::interpreter::Function;
 
 /// Init the standard functions
 pub fn st_functions() -> Vec<Function> {

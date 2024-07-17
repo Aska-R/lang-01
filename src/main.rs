@@ -7,6 +7,9 @@ mod parser;
 mod interpreter;
 mod st;
 
+#[cfg(test)]
+mod tests;
+
 fn main() {
     let _short_input = "3+3-2/()1*\"123\"456\"789\"";
     let _long_input = "3 + 3
