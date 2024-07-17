@@ -122,12 +122,12 @@ fn interpret(instructions: Vec<Node>, variables: &mut Vec<Variable>, functions: 
                 //variables.push(var.clone());
             },
             // Run function
-            Node::Function { name, args } => {
+            Node::Function { name, args: _ } => {
                 // Error prone line
-                Function::run_function(functions.to_vec(), name.to_string());
+                Function::run_function(functions.to_vec(), name.to_string()).unwrap();
             },
             // Define function
-            Node::TemplateFunction { name, nodes, args } => {
+            Node::DefineFunction { name: _, nodes: _, args: _ } => {
                 todo!();
             },
 

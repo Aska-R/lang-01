@@ -91,7 +91,7 @@ pub enum Node {
         args: Vec<Variable>,
     },
     // Used to for defining a function
-    TemplateFunction {
+    DefineFunction {
         name: String, 
         nodes: Vec<Node>,
         args: Vec<Variable>
@@ -131,8 +131,17 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
             Token::String(str) => {
                 nodes.append(&mut examine_string(iter, str, token.line).unwrap());
             },
-            Token::Other(_) => {
+            Token::Other(name) => {
                 // This is where tokens that don't fall under other token sections go
+                match name.as_str() {
+                    "print" => {
+                        // nodes.append()
+                    },
+
+                    _ => {
+                        todo!()
+                    }
+                }
             },
             Token::Function => {
 
@@ -280,7 +289,6 @@ fn put_into_nodes(iter: &mut Peekable<Iter<Tokens>>, end_token: Token) -> Result
                 return Err(SyntaxError::new("Comparator token found, this is impossible".to_string(), token.line));
             },
             Token::Comma => todo!(),
-            Token::Function => todo!(),
             // -------------------------------------------------------------------------------------
         }
     }
